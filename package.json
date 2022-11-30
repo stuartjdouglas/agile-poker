@@ -4,5 +4,8 @@
     "description": "my agile poker app",
     "dependencies": {
         "express": "^4.18.2"
+    },
+    "scripts": {
+        "start": "node index.js"
     }
 }
