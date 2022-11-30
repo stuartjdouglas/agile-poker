@@ -2,10 +2,14 @@
     "name": "agile-poker",
     "version": "0.0.1",
     "description": "my agile poker app",
+    "main": "index.js",
     "dependencies": {
         "express": "^4.18.2"
     },
     "scripts": {
         "start": "node index.js"
+    },
+    "engines": {
+        "node": ">=14"
     }
 }
