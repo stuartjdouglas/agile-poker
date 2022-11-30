@@ -8,6 +8,7 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css"
         crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -52,6 +53,11 @@
             margin-right: 15px;
         }
 
+        .card:hover {
+            margin-top: - 5px;
+            background: #e3e3e3;
+        }
+
         .card.voted {
             background: #e3e3e3;
             margin-top: -10px;
@@ -76,6 +82,12 @@
             align-items: center;
             color: black;
         }
+
+        table {
+            height: 200px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 
@@ -86,20 +98,27 @@
             My name is <input v-model="name">
         </div>
 
-
-
         <button v-on:click="revealVotes()" v-if="!game.showVotes">Reveal Votes</button>
         <button v-on:click="newVote()" v-if="game.showVotes">New Vote</button>
 
         <div class="voters">
-            <div class="voter" v-for="(votervote, voter) in game.votes"><span class="username">{{voter}}</span> <span
-                    v-if="game.showVotes || voter === name" class="vote">{{votervote}}</span></div>
+            <div class="voter" v-for="(votervote, voter) in game?.votes"><span class="username">{{voter}}</span> <span
+                    v-if="game?.showVotes || voter === name" class="vote">{{votervote}}</span></div>
         </div>
 
         <div class="cards">
             <div class="card" v-for="(vote) in votes" :class="{ voted: name && game?.votes[name] === vote }"
                 v-on:click="issueVote(vote)">
                 {{vote}}</div>
+        </div>
+
+        <div class="results" v-if="game?.results">
+            <h4>Results</h4>
+            <div class="result" v-for="(amount,vote) in game?.results">
+                <span class="amount">{{amount}} votes for </span>
+                <span class="vote">{{vote}} </span>
+            </div>
+
         </div>
     </div>
 </body>

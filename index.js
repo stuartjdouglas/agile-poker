@@ -29,6 +29,15 @@ io.on('connection', (socket) => {
     socket.on('reveal votes', () => {
         console.log('reveal the votes');
         game.showVotes = true;
+        game.results = {};
+
+        for (vote in game.votes) {
+            if (vote) {
+                game.results[game.votes[vote]] = game.results[game.votes[vote]] ? game.results[game.votes[vote]] + 1 : 1
+            }
+        }
+
+        console.table(game.results);
         socket.emit('reveal votes', game);
     })
 
