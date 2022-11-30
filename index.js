@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
 
     console.log('user connected');
-    socket.emit('voted', game);
+    socket.broadcast.emit('voted', game);
 
     socket.on('disconnect', () => {
         console.log('user disconnected');
@@ -38,6 +38,7 @@ io.on('connection', (socket) => {
         }
 
         console.table(game.results);
+        socket.broadcast.emit('reveal votes', game);
         socket.emit('reveal votes', game);
     })
 
@@ -45,6 +46,7 @@ io.on('connection', (socket) => {
         game.votes = {};
         game.showVotes = false;
         game.results = undefined;
+        socket.broadcast.emit('new vote', game);
         socket.emit('new vote', game);
     })
     socket.on('vote', (action) => {
@@ -55,6 +57,7 @@ io.on('connection', (socket) => {
 
 
 
+            socket.broadcast.emit('voted', game);
             socket.emit('voted', game);
         }
 
