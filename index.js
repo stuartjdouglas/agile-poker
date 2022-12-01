@@ -21,6 +21,7 @@ io.on('connection', (socket) => {
 
     console.log('user connected');
     socket.broadcast.emit('voted', game);
+    socket.emit('voted', game);
 
     socket.on('disconnect', () => {
         console.log('user disconnected');
@@ -51,15 +52,18 @@ io.on('connection', (socket) => {
     })
     socket.on('vote', (action) => {
         if (!game.showVotes) {
-
-
             game.votes[action.username] = action.vote;
-
-
-
             socket.broadcast.emit('voted', game);
             socket.emit('voted', game);
         }
+
+    });
+
+    socket.on('hi', (username) => {
+        console.log(`User ${username} says hi`)
+        game.votes[username] = null;
+        socket.broadcast.emit('voted', game);
+        socket.emit('voted', game);
 
     });
 

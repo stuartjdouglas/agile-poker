@@ -12,7 +12,10 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 0px!important;
         }
+
+     
 
         .cards,
         .voters {
@@ -30,6 +33,8 @@
             padding-bottom: 15px;
             position: absolute;
             bottom: 0;
+            width: 100vw;
+            justify-content: center;
             margin: 0;
             padding: 10px;
             margin: auto;
@@ -49,17 +54,21 @@
             background: white;
             border-radius: 5px;
             border-style: solid;
-            color: black;
+            border-color: #00b4d8;
+            color: #00b4d8;
+            font-weight: bold;
             margin-right: 15px;
         }
 
         .card:hover {
             margin-top: - 5px;
-            background: #e3e3e3;
+            background: white;
+            cursor: pointer;
         }
 
         .card.voted {
-            background: #e3e3e3;
+            color: black;
+            background: #90e0ef;
             margin-top: -10px;
         }
 
@@ -71,6 +80,7 @@
             background: white;
             border-radius: 5px;
             border-style: solid;
+            border-color: #00b4d8;
             text-align: center;
             flex-direction: column;
             margin-bottom: 10px;
@@ -81,6 +91,7 @@
             justify-content: center;
             align-items: center;
             color: black;
+            font-weight: bold;
         }
 
         table {
@@ -88,38 +99,61 @@
             max-width: 300px;
             margin: 0 auto;
         }
+
+        .board {
+            padding: 50px;
+        }
+
+        .results {
+            text-align: center;
+            border-radius: 5px;
+            border-style: solid;
+            border-color: #00b4d8;
+            padding: 15px;
+            margin-top: 25px;
+        }
+
+        .results button {
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body>
 
     <div id="app">
-        <div class="setName">
-            My name is <input v-model="name">
+        <div class="board">
+            <div class="setName">
+                My name is <input v-model="name"> <button v-on:click="setName()">Set name</button>
+            </div>
+    
+           
+            <button v-on:click="revealVotes()" v-if="!game.showVotes">Reveal Votes</button>
+    
+            <h1>Votes</h1>
+
+            <div v-if="game?.votes?.length === 0">No votes yet...</div>
+            <div class="voters">
+                <div class="voter" v-for="(votervote, voter) in game?.votes"><span class="username">{{voter}}</span> <span
+                        v-if="game?.showVotes || voter === name" class="vote">{{votervote ? votervote : 'not voted'}}</span></div>
+            </div>
+    
+            <div class="results" v-if="game?.results">
+                <h2>Results</h2>
+                <div class="result" v-for="(amount,vote) in game?.results">
+                    <span class="amount">{{amount}} votes for </span>
+                    <span class="vote">{{vote}}</span>
+                </div>
+                <button v-on:click="newVote()" v-if="game.showVotes">New Vote</button>
+    
+            </div>
         </div>
-
-        <button v-on:click="revealVotes()" v-if="!game.showVotes">Reveal Votes</button>
-        <button v-on:click="newVote()" v-if="game.showVotes">New Vote</button>
-
-        <div class="voters">
-            <div class="voter" v-for="(votervote, voter) in game?.votes"><span class="username">{{voter}}</span> <span
-                    v-if="game?.showVotes || voter === name" class="vote">{{votervote}}</span></div>
-        </div>
-
         <div class="cards">
             <div class="card" v-for="(vote) in votes" :class="{ voted: name && game?.votes[name] === vote }"
                 v-on:click="issueVote(vote)">
                 {{vote}}</div>
         </div>
-
-        <div class="results" v-if="game?.results">
-            <h4>Results</h4>
-            <div class="result" v-for="(amount,vote) in game?.results">
-                <span class="amount">{{amount}} votes for </span>
-                <span class="vote">{{vote}} </span>
-            </div>
-
-        </div>
+        
     </div>
 </body>
 
@@ -155,17 +189,26 @@
         },
         methods: {
             issueVote: function (voteValue) {
-                socket.emit('vote', {
-                    username: this.name,
-                    vote: voteValue
-                });
+                if (this.name) {
+                    socket.emit('vote', {
+                        username: this.name,
+                        vote: voteValue
+                    });
+                }
+
             },
             newVote: function () {
-                socket.emit('new vote');
-
+                    socket.emit('new vote');
             },
             revealVotes: function () {
                 socket.emit('reveal votes');
+            },
+            setName: function () {
+                if (this.name) {
+                    socket.emit('hi', this.name);
+                } else {
+                    console.log('please set your name')
+                }
             }
         },
         mounted() {
@@ -190,7 +233,14 @@
             socket.on('new vote', (game) => {
                 console.log('new vote started');
                 this.game = game;
-            })
+                if (localStorage.name) {
+                    socket.emit('hi', localStorage.name);
+                }
+            });
+            
+            if (localStorage.name) {
+                socket.emit('hi', localStorage.name);
+            }
         },
         watch: {
             name(newName) {
