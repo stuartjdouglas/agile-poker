@@ -9,293 +9,58 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css"
         crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding: 0px!important;
-        }
-
-     
-
-        .cards,
-        .voters {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .voters {
-            justify-content: space-around;
-            flex-wrap: wrap;
-        }
-
-        .cards {
-            padding-top: 15px;
-            padding-bottom: 15px;
-            position: absolute;
-            bottom: 0;
-            width: 100vw;
-            justify-content: center;
-            margin: 0;
-            padding: 10px;
-            margin: auto;
-            padding: 10px;
-        }
-
-        body {
-            padding: 30px;
-        }
-
-        .card {
-            display: flex;
-            height: 80px;
-            width: 60px;
-            justify-content: center;
-            align-items: center;
-            background: white;
-            border-radius: 5px;
-            border-style: solid;
-            border-color: #00b4d8;
-            color: #00b4d8;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-
-        .card:hover {
-            margin-top: - 5px;
-            background: white;
-            cursor: pointer;
-        }
-
-        .card.voted {
-            color: black;
-            background: #90e0ef;
-            margin-top: -10px;
-        }
-
-        .voter {
-            min-width: 50px;
-            min-height: 50px;
-            padding: 5px;
-            display: flex;
-            background: white;
-            border-radius: 5px;
-            border-style: solid;
-            border-color: #00b4d8;
-            text-align: center;
-            flex-direction: column;
-            margin-bottom: 10px;
-        }
-
-        .username {
-            text-align: center;
-            justify-content: center;
-            align-items: center;
-            color: black;
-            font-weight: bold;
-        }
-
-        table {
-            height: 200px;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-
-        .board {
-            padding: 50px;
-        }
-
-        .results {
-            text-align: center;
-            border-radius: 5px;
-            border-style: solid;
-            border-color: #00b4d8;
-            padding: 15px;
-            margin-top: 25px;
-        }
-
-        .results button {
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
+<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 </head>
 
 <body>
-
     <div id="app">
         <div class="board">
-            <div class="setName">
+            <h1>Scrum Poker</h1>  
+            <div class="setName" v-if="!changeName">
                 My name is <input v-model="name"> <button v-on:click="setName()">Set name</button>
             </div>
-    
-           
-            <button v-on:click="revealVotes()" v-if="!game.showVotes">Reveal Votes</button>
     
             <h1>Votes</h1>
 
             <div v-if="game?.votes?.length === 0">No votes yet...</div>
             <div class="voters">
-                <div class="voter" v-for="(votervote, voter) in game?.votes"><span class="username">{{voter}}</span> 
-                    <span v-if="game?.showVotes || voter === name" class="vote">{{votervote}}</span>
-                    <span class="vote">{{votervote ? 'voted' : 'not voted'}}</span></div>
-            </div>
-    
-            <div class="results" v-if="game?.results">
-                <h2>Results</h2>
-                <div class="result" v-for="(amount,vote) in game?.results">
-                    <span class="amount">{{amount}} votes for </span>
-                    <span class="vote">{{vote}}</span>
+                <div class="voter animate__animated animate__fadeIn" v-for="voter in game?.votes"><span class="username">{{voter.username}}</span> 
+                    <span v-if="game?.concluded" class="vote">{{voter.vote}}</span>
+                    <span class="vote">{{voter.vote != null ? 'voted' : 'not voted'}}</span>
                 </div>
-                <button v-on:click="newVote()" v-if="game.showVotes">New Vote</button>
+            </div>
+
+            <button v-on:click="revealVotes()" v-if="!game.concluded">Reveal Votes</button>
+
+    
+            <div class="results" v-if="game?.concluded">
+                <h2>Results</h2>
+                <div class="result" v-for="vote in game?.results">
+                    <span class="amount">{{vote.numOfVotes}} votes for </span>
+                    <span class="vote">{{vote.vote}}</span>
+                </div>
+                <button v-on:click="newVote()" v-if="game.concluded">Start new vote</button>
     
             </div>
         </div>
-        <div class="cards">
-            <div class="card" v-for="(vote) in votes" :class="{ voted: name && game?.votes[name] === vote }"
-                v-on:click="issueVote(vote)">
-                {{vote}}</div>
+
+
+        <div class="bottom-pane">
+            <div class="cards">
+                <div class="card" v-for="(vote) in votes" :class="getCardClass(vote)" v-if="name"
+                    v-on:click="issueVote(vote)">
+                    {{vote}}</div>
+            </div>
         </div>
         
     </div>
 </body>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-
-
 <script src="/socket.io/socket.io.js"></script>
-<script>
-    const { createApp } = Vue
-    const socket = io();
-
-    var messages = document.getElementById('messages');
-    var form = document.getElementById('form');
-    var input = document.getElementById('input');
-
-
-    const login = document.querySelector('.login');
-    var loginForm = document.getElementById('login-form');
-    var loginInput = document.getElementById('login-input');
-
-    let username = localStorage.getItem('username');
-
-    createApp({
-        data() {
-            return {
-                votes: [0, 1, 2, 3, 5, 8, 13, 20, 40, '?'],
-                name: null,
-                game: {
-                    showVotes: false,
-                    votes: []
-                }
-            }
-        },
-        methods: {
-            issueVote: function (voteValue) {
-                if (this.name) {
-                    socket.emit('vote', {
-                        username: this.name,
-                        vote: voteValue
-                    });
-                }
-
-            },
-            newVote: function () {
-                    socket.emit('new vote');
-            },
-            revealVotes: function () {
-                socket.emit('reveal votes');
-            },
-            setName: function () {
-                if (this.name) {
-                    socket.emit('hi', this.name);
-                } else {
-                    console.log('please set your name')
-                }
-            }
-        },
-        mounted() {
-            if (localStorage.name) {
-                this.name = localStorage.name
-            }
-
-            if (localStorage.game) {
-                this.game = localStorage.game;
-            }
-        },
-        created() {
-            socket.on('voted', (game) => {
-                this.game = game;
-            });
-
-            socket.on('reveal votes', (game) => {
-                console.log('reveal the votes');
-                this.game = game;
-            });
-
-            socket.on('new vote', (game) => {
-                console.log('new vote started');
-                this.game = game;
-                if (localStorage.name) {
-                    socket.emit('hi', localStorage.name);
-                }
-            });
-            
-            if (localStorage.name) {
-                socket.emit('hi', localStorage.name);
-            }
-        },
-        watch: {
-            name(newName) {
-                localStorage.name = newName;
-            },
-            game(gameUpdate) {
-                localStorage.game = gameUpdate;
-            }
-        }
-    }).mount('#app')
-
-    // if (username) {
-    //     login.style.display = 'none';
-    // }
-
-    // socket.on("connect", () => {
-    //     socket.emit('login', socket.id);
-    // });
-
-    // console.log(socket);
-    // form.addEventListener('submit', function (e) {
-    //     e.preventDefault();
-    //     if (input.value) {
-    //         socket.emit('chat message', input.value);
-    //         input.value = '';
-    //     }
-    // });
-
-    // /** User login */
-    // loginForm.addEventListener('submit', function (e) {
-    //     e.preventDefault();
-    //     localStorage.setItem('username', loginInput.value);
-
-    //     login.style.display = 'none';
-    // });
-
-    // socket.on('vote', function (action) {
-    //     socket.emit('vote', {
-    //         username: localStorage.getItem('username'),
-    //         vote: 0
-    //     });
-    // });
-
-    // socket.on('chat message', function (msg) {
-    //     var item = document.createElement('li');
-    //     item.textContent = msg;
-    //     messages.appendChild(item);
-    //     window.scrollTo(0, document.body.scrollHeight);
-    // });
-
-    // socket.on('user connect', function (user) {
-    //     console.log('user', user);
-    // });
-
-</script>
+<script src="app.js"></script>
 
 </html>
