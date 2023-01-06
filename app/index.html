@@ -10,52 +10,96 @@
         crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link rel="stylesheet" href="styles.css">
-    
-    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
-<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css"
+        rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 </head>
 
 <body>
     <div id="app">
-        <div class="board">
-            <h1>Scrum Poker</h1>  
-            <div class="setName" v-if="!changeName">
-                My name is <input v-model="name"> <button v-on:click="setName()">Set name</button>
-            </div>
-    
-            <h1>Votes</h1>
 
-            <div v-if="game?.votes?.length === 0">No votes yet...</div>
+        <div class="login" v-if="!hasName">
+            <div class="setName" v-if="!changeName">
+                My name is <input v-model="name"> <button @click="setName(name)">Set name</button>
+            </div>
+        </div>
+
+
+        <div class="board" v-if="hasName">
+            <h1>Voting for {{vote?.name ? vote?.name : vote?.dateCreated}}</h1>
+
+            <button v-on:click="revealVotes()" v-if="!vote?.concluded">Reveal Votes</button>
+            <button v-on:click="hasName = false" v-if="!vote?.concluded">Change Name</button>
+
+            <h2>Votes</h2>
+
+            <div v-if="vote?.votes?.length === 0">No votes yet...</div>
+
+
+            <div class="novote" v-if="!vote">No vote started...
+                <form>
+                    <label for="resultsNewVote">New Vote name</label>
+                    <input v-model="voteName" id="resultsNewVote">
+                </form>
+                <button v-on:click="newVote(voteName)">Start new vote</button>
+            </div>
             <div class="voters">
-                <div class="voter animate__animated animate__fadeIn" v-for="voter in game?.votes"><span class="username">{{voter.username}}</span> 
-                    <span v-if="game?.concluded" class="vote">{{voter.vote}}</span>
+                <div class="voter animate__animated animate__fadeIn" v-for="voter in vote?.votes"><span
+                        class="username">{{voter.username}}</span>
+                    <span v-if="vote?.concluded" class="vote">{{voter.vote}}</span>
                     <span class="vote">{{voter.vote != null ? 'voted' : 'not voted'}}</span>
                 </div>
             </div>
 
-            <button v-on:click="revealVotes()" v-if="!game.concluded">Reveal Votes</button>
 
-    
-            <div class="results" v-if="game?.concluded">
+            <div class="results" v-if="vote?.concluded">
                 <h2>Results</h2>
-                <div class="result" v-for="vote in game?.results">
+                <div class="result" v-for="vote in vote?.results">
                     <span class="amount">{{vote.numOfVotes}} votes for </span>
                     <span class="vote">{{vote.vote}}</span>
                 </div>
-                <button v-on:click="newVote()" v-if="game.concluded">Start new vote</button>
-    
+                <form>
+                    <label for="resultsNewVote">New Vote name</label>
+                    <input v-model="voteName" id="resultsNewVote">
+                </form>
+                <button v-on:click="newVote(voteName)" v-if="vote.concluded">Start new vote</button>
+
+            </div>
+            <div class="history">
+                <h2>History</h2>
+                <div class="history-vote" v-for="historyVote in getHistory()">
+                    <div v-if="historyVote.concluded">
+                        <h4>{{historyVote?.name ? historyVote?.name + ' - ' : ''}}{{historyVote?.dateCreated}}</h4>
+                        <table>
+                            <tr>
+                                <th>Vote</th>
+                                <th>Number of voters</th>
+                                <th>Voters</th>
+
+                            </tr>
+                            <tr v-for="h in historyVote?.results">
+                                <td>{{h.vote}}</td>
+                                <td>{{h.numOfVotes}}</td>
+                                <td>{{h.voters.join(',')}}</td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>
             </div>
         </div>
+
 
 
         <div class="bottom-pane">
             <div class="cards">
-                <div class="card" v-for="(vote) in votes" :class="getCardClass(vote)" v-if="name"
-                    v-on:click="issueVote(vote)">
-                    {{vote}}</div>
+                <div class="card" v-for="(card) in cards" :class="getCardClass(card)" v-if="name"
+                    v-on:click="issueVote(card)">
+                    {{card}}</div>
             </div>
         </div>
-        
+
     </div>
 </body>
 

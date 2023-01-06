@@ -19,7 +19,7 @@ body {
 
 .bottom-pane {
     position: absolute;
-    bottom: 0;
+    bottom: 5vh;
     width: 100vw;
     justify-content: center;
 }
@@ -139,4 +139,15 @@ table {
 
 .icon-ok {
     color: #a7c957;
+}
+
+.history {
+    position: absolute;
+    top: 95vh;
+}
+
+.novote {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
 }
