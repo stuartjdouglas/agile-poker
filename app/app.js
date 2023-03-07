@@ -1,4 +1,4 @@
-const { createApp } = Vue
+const { createApp } = Vue;
 const socket = io();
 
 createApp({
@@ -10,7 +10,8 @@ createApp({
             socketID: null,
             votes: null,
             vote: null,
-            connectedVoters: null
+            connectedVoters: null,
+            chartData: null
         }
     },
     methods: {
@@ -55,8 +56,34 @@ createApp({
             return this.vote && this.vote.votes.find(vote => vote.vote !== undefined);
         },
         getHistory: function () {
-            return this.votes.sort((a, b) => {
+            return this.votes?.sort((a, b) => {
                 return new Date(b.dateCreated) - new Date(a.dateCreated);
+            });
+        },
+        showGraph: function (voteTOSHOW) {
+            console.log('showing graph');
+
+            const ctx = document.getElementById('myChart');
+            const labels = voteTOSHOW?.results?.filter(v => v !== null).map(v => v?.vote);
+            const data = voteTOSHOW?.results?.map(v => v?.numOfVotes);
+            new Chart(document.getElementById('myChart'), {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: '# of Votes',
+                        data,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    legend: { display: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
         }
     },
@@ -74,13 +101,20 @@ createApp({
             this.vote = getCurrentVote(votes.votes);
             this.votes = votes.votes;
             this.connectedVoters = votes.connectedVoters;
+            if (this.vote?.concluded) {
+                this.showGraph(this.vote);
+            }
         });
 
         socket.on('reveal votes', (votes) => {
-            console.log('Votes revealed');
+            console.log('Votes revealed', votes);
             this.vote = getCurrentVote(votes.votes);
             this.votes = votes.votes;
             this.connectedVoters = votes.connectedVoters;
+            setTimeout(() => {
+                this.showGraph(this.vote)
+
+            }, 0)
         });
 
         socket.on('new vote', (votes) => {

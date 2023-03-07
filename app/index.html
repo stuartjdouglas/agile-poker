@@ -2,40 +2,36 @@
 <html>
 
 <head>
-    <title>Agile poker</title>
+    <title>Scrum Poker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-css-reset@1.4.0/dist/reset.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css"
-        crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <link rel="stylesheet" href="styles.css">
-
     <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css"
         rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Noto+Sans:400,700,400italic,700italic&subset=latin,latin-ext'
+        rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="styles.css">
     <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 </head>
 
 <body>
     <div id="app">
-
+        <div class="titlebar">
+            <h2>Voting for {{vote?.name ? vote?.name : vote?.dateCreated}}</h2>
+            <div class="buttons">
+                <button v-on:click="hasName = false" v-if="!vote?.concluded">Change Name</button>
+            </div>
+        </div>
         <div class="login" v-if="!hasName">
             <div class="setName" v-if="!changeName">
                 My name is <input v-model="name"> <button @click="setName(name)">Set name</button>
             </div>
         </div>
 
-
         <div class="board" v-if="hasName">
-            <h1>Voting for {{vote?.name ? vote?.name : vote?.dateCreated}}</h1>
-
-            <button v-on:click="revealVotes()" v-if="!vote?.concluded">Reveal Votes</button>
-            <button v-on:click="hasName = false" v-if="!vote?.concluded">Change Name</button>
-
-            <h2>Votes</h2>
-
+            <h4><span class="pill" v-if="vote?.votes">{{vote?.votes?.length + ' '}}</span></span>Voters</h4>
             <div v-if="vote?.votes?.length === 0">No votes yet...</div>
-
 
             <div class="novote" v-if="!vote">No vote started...
                 <form>
@@ -44,21 +40,40 @@
                 </form>
                 <button v-on:click="newVote(voteName)">Start new vote</button>
             </div>
+
             <div class="voters">
-                <div class="voter animate__animated animate__fadeIn" v-for="voter in vote?.votes"><span
-                        class="username">{{voter.username}}</span>
-                    <span v-if="vote?.concluded" class="vote">{{voter.vote}}</span>
-                    <span class="vote">{{voter.vote != null ? 'voted' : 'not voted'}}</span>
+                <div class="voter animate__animated animate__fadeIn" :class="{novote: !voter.vote}"
+                    v-for="voter in vote?.votes">
+                    <i class="icon-user"></i>
+                    <div class="voter-details">
+                        <span class="username">{{voter.username}}</span>
+                        <span class="vote">{{voter.vote != null ? 'voted' : 'not voted'}}</span>
+                        <span v-if="vote?.concluded" class="vote">{{voter.vote}}</span>
+                    </div>
                 </div>
             </div>
 
+            <div class="center-stuff">
+
+                <button class="center-button" v-on:click="revealVotes()" v-if="!vote?.concluded">Reveal Votes</button>
+
+            </div>
 
             <div class="results" v-if="vote?.concluded">
-                <h2>Results</h2>
-                <div class="result" v-for="vote in vote?.results">
-                    <span class="amount">{{vote.numOfVotes}} votes for </span>
-                    <span class="vote">{{vote.vote}}</span>
+                <h2>Results.</h2>
+                <div class="results-container"></div>
+                <div class="split">
+                    <div style="height: 200px;"><canvas id="myChart"></canvas></div>
+
+                    <div class="result-container">
+                        <div class="result" v-for="vote in vote?.results">
+                            <span class="amount">{{vote.numOfVotes}} vote(s) for </span>
+                            <span class="vote">{{vote.vote !== undefined ? vote.vote : 'not voted'}}</span>
+                        </div>
+                    </div>
                 </div>
+
+
                 <form>
                     <label for="resultsNewVote">New Vote name</label>
                     <input v-model="voteName" id="resultsNewVote">
@@ -92,7 +107,7 @@
 
 
 
-        <div class="bottom-pane">
+        <div class="bottom-pane" v-if="!vote?.concluded">
             <div class="cards">
                 <div class="card" v-for="(card) in cards" :class="getCardClass(card)" v-if="name"
                     v-on:click="issueVote(card)">
@@ -105,6 +120,7 @@
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js"></script>
 <script src="app.js"></script>
 
 </html>

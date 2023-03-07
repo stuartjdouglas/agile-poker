@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
             console.log(vote);
             const result = vote.results.find(result => result.vote === userVote.vote);
 
-            if (userVote.vote) {
+            if (userVote.vote !== null) {
                 if (!result) {
                     vote.results.push(new Result(userVote.vote, 1, [userVote.id]));
                 } else {
