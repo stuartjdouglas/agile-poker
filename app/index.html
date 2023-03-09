@@ -35,7 +35,6 @@
             <h4><span class="pill" v-if="vote?.votes">{{getVoters(connectedVoters, vote).length
                     + ' '}}</span></span>Voters
             </h4>
-            <div v-if="vote?.votes?.length === 0">No votes yet...</div>
 
             <div class="novote" v-if="!vote">No vote started...
                 <form>
