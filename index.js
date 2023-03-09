@@ -6,13 +6,21 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const port = process.env.PORT || 3000;
 
+class User {
+    username;
+
+    isModerator;
+
+    constructor(username, isModerator) {
+        this.username = username;
+        this.isModerator = isModerator;
+    }
+}
+
 /**
  * User vote class.
  */
 class UserVote {
-
-    /** User id */
-    id;
 
     /** Username */
     username;
@@ -20,14 +28,9 @@ class UserVote {
     /** The user vote */
     vote;
 
-    /** Flag to mark user as moderator */
-    isModerator;
-
     constructor(username, vote) {
         this.username = username;
-        this.id = username;
         this.vote = vote;
-        this.isModerator;
     }
 }
 
@@ -83,10 +86,10 @@ class Vote {
 
 /** Game */
 class Game {
-    /** votes */
+    /** votes List of Votes */
     votes;
 
-    /** The connected players */
+    /** The connected players - List of User */
     connectedVoters;
 
     constructor() {
@@ -123,7 +126,6 @@ io.on('connection', (socket) => {
         vote.concluded = true;
 
         vote.votes.forEach(userVote => {
-            console.log(vote);
             const result = vote.results.find(result => result.vote === userVote.vote);
 
             if (userVote.vote !== null) {
@@ -147,6 +149,7 @@ io.on('connection', (socket) => {
     function handleNewVote(name) {
         const vote = new Vote(name);
         console.log('New vote started', name);
+        game.connectedVoters = [];
         if (!game.votes) {
             game.votes = new Array(vote);
         } else {
@@ -158,21 +161,17 @@ io.on('connection', (socket) => {
     /**
      * Handles clients communicating.
      *
-     * @param username the username 
+     * @param response username and isModerator
      */
-    function handleHi(username) {
-        console.log(`User ${username} says hi`);
-        if (!game.connectedVoters.includes(username)) {
-            game.connectedVoters.push(username);
-        }
-        const userVote = getUsersVote(username);
-        if (userVote) {
-            userVote.vote = null;
+    function handleHi(response) {
+        console.log(`User ${response.name} says hi${response.isModerator ? ', I am a mod' : ', i am not a mod'}`);
+        const user = game.connectedVoters.find(user => user.username === response.name);
+        if (!user) {
+            game.connectedVoters.push(new User(response.name, response.isModerator));
         } else {
-            if (game.currentVote()) {
-                game.currentVote().votes.push(new UserVote(username));
-            }
+            user.isModerator = response.isModerator;
         }
+
         broadcastUpdate('voted');
     }
 
@@ -205,7 +204,7 @@ io.on('connection', (socket) => {
         if (!vote || vote && !vote.votes) {
             return;
         }
-        return vote.votes.find(vote => vote.id === userId);
+        return vote.votes.find(vote => vote.username === userId);
     }
 
     /** Broadcasts updates to all users */
@@ -226,6 +225,9 @@ io.on('connection', (socket) => {
     socket.on('new vote', handleNewVote);
     socket.on('vote', handleVote);
     socket.on('hi', handleHi);
+    socket.on('bye', (name) => {
+        console.log('bye', name)
+    });
 });
 
 server.listen(port, () => {

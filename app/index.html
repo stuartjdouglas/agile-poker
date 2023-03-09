@@ -18,8 +18,10 @@
 <body>
     <div id="app">
         <div class="titlebar">
-            <h2>Voting for {{vote?.name ? vote?.name : vote?.dateCreated}}</h2>
+            <h2>Hi {{name}}, Your voting for {{vote?.name ? vote?.name : vote?.dateCreated}}</h2>
             <div class="buttons">
+                <input type="checkbox" id="checkbox" v-model="isModerator">
+                <label for="checkbox">Moderator</label>
                 <button v-on:click="hasName = false" v-if="!vote?.concluded">Change Name</button>
             </div>
         </div>
@@ -30,7 +32,9 @@
         </div>
 
         <div class="board" v-if="hasName">
-            <h4><span class="pill" v-if="vote?.votes">{{vote?.votes?.length + ' '}}</span></span>Voters</h4>
+            <h4><span class="pill" v-if="vote?.votes">{{getVoters(connectedVoters, vote).length
+                    + ' '}}</span></span>Voters
+            </h4>
             <div v-if="vote?.votes?.length === 0">No votes yet...</div>
 
             <div class="novote" v-if="!vote">No vote started...
@@ -42,20 +46,25 @@
             </div>
 
             <div class="voters">
-                <div class="voter animate__animated animate__fadeIn" :class="{novote: !voter.vote}"
-                    v-for="voter in vote?.votes">
-                    <i class="icon-user"></i>
+                <div class="voter animate__animated animate__fadeIn"
+                    :class="{novote: !hasUserVoted(voter.username), special: voter.username.toLowerCase() === 'chuka'}"
+                    v-for="voter in getVoters(connectedVoters, vote)">
+                    <i
+                        :class="{'icon-star': voter.username.toLowerCase() === 'chuka', 'icon-user': voter.username.toLowerCase() !== 'chuka'}"></i>
                     <div class="voter-details">
                         <span class="username">{{voter.username}}</span>
-                        <span class="vote">{{voter.vote != null ? 'voted' : 'not voted'}}</span>
-                        <span v-if="vote?.concluded" class="vote">{{voter.vote}}</span>
+                        <span v-if="voter.isModerator">Mod</span>
+                        <span class="vote">{{hasUserVoted(voter.username) != null ? 'voted' : 'not voted'}}</span>
+                        <span v-if="vote?.concluded" class="vote">{{getUserVote(voter.username)}}</span>
                     </div>
                 </div>
             </div>
 
             <div class="center-stuff">
-
-                <button class="center-button" v-on:click="revealVotes()" v-if="!vote?.concluded">Reveal Votes</button>
+                <button class="center-button animate__animated"
+                    :class="{animate__headShake:getUserVotes(connectedVoters) ==='(All Voted)'}"
+                    v-on:click="revealVotes()" v-if="!vote?.concluded">{{getUserVotes(connectedVoters)}} Reveal
+                    Votes</button>
 
             </div>
 
@@ -73,13 +82,11 @@
                     </div>
                 </div>
 
-
                 <form>
                     <label for="resultsNewVote">New Vote name</label>
                     <input v-model="voteName" id="resultsNewVote">
                 </form>
                 <button v-on:click="newVote(voteName)" v-if="vote.concluded">Start new vote</button>
-
             </div>
             <div class="history">
                 <h2>History</h2>
@@ -104,8 +111,6 @@
                 </div>
             </div>
         </div>
-
-
 
         <div class="bottom-pane" v-if="!vote?.concluded">
             <div class="cards">

@@ -7,9 +7,11 @@ createApp({
             cards: [0, 1, 2, 3, 5, 8, 13, 20, 40, '?'],
             hasName: false,
             name: null,
+            isModerator: null,
             socketID: null,
             votes: null,
             vote: null,
+            voter: null,
             connectedVoters: null,
             chartData: null
         }
@@ -37,7 +39,10 @@ createApp({
         },
         setName: function () {
             if (this.name) {
-                socket.emit('hi', this.name);
+                socket.emit('hi', {
+                    name: localStorage.name,
+                    isModerator: localStorage.isModerator
+                });
                 this.changeName = false;
                 this.hasName = true;
             } else {
@@ -85,15 +90,57 @@ createApp({
                     }
                 }
             });
+        },
+        getUserVotes(voters) {
+            voters = voters.filter(v => !v.isModerator);
+            const hasVoted = voters.filter(voter => this.vote?.votes?.find(v => v?.username === voter?.username)?.vote)
+            if (hasVoted?.length === voters?.length) {
+                return '(All Voted)';
+            }
+            return `(${hasVoted?.length}/${voters?.length})`;
+        },
+        getVoters(voters, vote) {
+            voters?.sort((a, b) => {
+                if (!a.isModerator) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            });
+            if (this.vote?.concluded) {
+                return voters.sort((a, b) => vote?.votes?.find(v => v?.username === a?.username)?.vote - vote?.votes?.find(v => v?.username === b?.username)?.vote);
+            }
+            return voters;
+        },
+        leaving() {
+            socket.emit('bye', localStorage.name);
+        },
+        hasUserVoted(username) {
+            if (this.vote) {
+
+                return this.vote?.votes?.find(vote => vote.username === username);
+            }
+            return false;
+        },
+        getUserVote(username) {
+            if (this.vote) {
+                return this.vote?.votes?.find(vote => vote?.username === username)?.vote;
+            }
+            return null;
         }
     },
     mounted() {
         if (localStorage.name) {
-            this.name = localStorage.name
+            this.name = localStorage.name;
             this.hasName = true;
+        }
+        if (localStorage.isModerator) {
+
+            this.isModerator = localStorage.isModerator;
         }
     },
     created() {
+        window.addEventListener("beforeunload", this.leaving);
         const getCurrentVote = (votes) => votes[votes.length - 1];
 
         socket.on('voted', (votes) => {
@@ -107,7 +154,6 @@ createApp({
         });
 
         socket.on('reveal votes', (votes) => {
-            console.log('Votes revealed', votes);
             this.vote = getCurrentVote(votes.votes);
             this.votes = votes.votes;
             this.connectedVoters = votes.connectedVoters;
@@ -118,16 +164,29 @@ createApp({
         });
 
         socket.on('new vote', (votes) => {
-            console.log('New Vote Created');
+
+            // Set to new vote game
             this.vote = getCurrentVote(votes.votes);
+
+            // Reset user votes
             this.votes = votes.votes;
+
+            // Reset connected voters
             this.connectedVoters = votes.connectedVoters;
+
+            // Let server know your playing
             if (localStorage.name) {
-                socket.emit('hi', localStorage.name);
+                socket.emit('hi', {
+                    name: localStorage.name,
+                    isModerator: localStorage.isModerator === 'true'
+                });
             }
         });
-        if (localStorage.name) {
-            socket.emit('hi', localStorage.name);
+        if (localStorage.name && localStorage.isModerator) {
+            socket.emit('hi', {
+                name: localStorage.name,
+                isModerator: localStorage?.isModerator === 'true'
+            });
         }
     },
     watch: {
@@ -136,6 +195,16 @@ createApp({
         },
         game(gameUpdate) {
             localStorage.game = gameUpdate;
+        },
+        isModerator(value) {
+            localStorage.isModerator = value;
+            if (this.hasName) {
+
+                socket.emit('hi', {
+                    name: localStorage.name,
+                    isModerator: localStorage.isModerator === 'true'
+                });
+            }
         }
     }
 }).mount('#app')
