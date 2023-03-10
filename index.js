@@ -167,7 +167,7 @@ io.on('connection', (socket) => {
         console.log(`User ${response.name} says hi${response.isModerator ? ', I am a mod' : ', i am not a mod'}`);
         const user = game.connectedVoters.find(user => user.username === response.name);
         if (!user) {
-            game.connectedVoters.push(new User(response.name, response.isModerator));
+            game.connectedVoters.push(new User(response.name ? response.name : 'Unknown User', response.isModerator));
         } else {
             user.isModerator = response.isModerator;
         }

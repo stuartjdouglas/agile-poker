@@ -92,7 +92,7 @@ createApp({
             });
         },
         getUserVotes(voters) {
-            voters = voters.filter(v => !v.isModerator);
+            voters = voters.filter(v => v && !v.isModerator);
             const hasVoted = voters.filter(voter => this.vote?.votes?.find(v => v?.username === voter?.username)?.vote)
             if (hasVoted?.length === voters?.length) {
                 return '(All Voted)';
