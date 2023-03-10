@@ -46,10 +46,10 @@
 
             <div class="voters">
                 <div class="voter animate__animated animate__fadeIn"
-                    :class="{novote: !hasUserVoted(voter.username), special: voter.username.toLowerCase() === 'chuka'}"
+                    :class="{novote: !hasUserVoted(voter.username), special: voter?.username?.toLowerCase() === 'chuka'}"
                     v-for="voter in getVoters(connectedVoters, vote)">
                     <i
-                        :class="{'icon-star': voter.username.toLowerCase() === 'chuka', 'icon-user': voter.username.toLowerCase() !== 'chuka'}"></i>
+                        :class="{'icon-star': voter?.username?.toLowerCase() === 'chuka', 'icon-user': voter?.username?.toLowerCase() !== 'chuka'}"></i>
                     <div class="voter-details">
                         <span class="username">{{voter.username}}</span>
                         <span v-if="voter.isModerator">Mod</span>
