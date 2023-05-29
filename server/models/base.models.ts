@@ -20,7 +20,7 @@ export class UserVote {
     /** The user vote */
     vote: Vote;
 
-    previousVote: Vote;
+    previousVote: any;
 
     constructor(username: string, vote: Vote) {
         this.username = username;
