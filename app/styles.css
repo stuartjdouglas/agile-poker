@@ -1,7 +1,6 @@
 body {
     padding: 0px!important;
-
-    background-color: #fbfbff;
+    background-color: #fbfef9;
 }
 
 *, body, html, button, input, h1, a, h2, h3, h4, p {
@@ -9,7 +8,38 @@ body {
 }
 
 
+.vote-result {
+    color: #00b4d8;
 
+}
+
+.results-table {
+    min-width: 300px;
+    /* padding: 5px;
+    margin: 0; */
+}
+
+.revote-button {
+    margin-left: 10px;
+}
+
+.number-vote {
+    /* padding-right: 10px; */
+    border-radius: 5px;
+    background: blue;
+    width: 50px;
+    text-align: right;
+}
+
+.vote-amount {
+    color: #00b4d8;
+}
+
+.vote-change {
+    background: white;
+
+    color: #00b4d8;
+}
 .cards {
     display: flex;
     justify-content: space-between;
@@ -93,6 +123,18 @@ body {
     margin-top: -10px;
     animation-name: cardUp;
     animation-duration: 0.5s;
+}
+
+.voted{
+    background: white;
+    border-radius: 5px;
+    color: #00b4d8;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.previous-vote {
+    font-size: 0.8em;
 }
 
 .voter {

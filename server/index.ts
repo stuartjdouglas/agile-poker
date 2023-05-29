@@ -28,20 +28,43 @@ io.on('connection', (socket) => {
      */
     function handleRevealResults() {
         console.log('Revealing the votes');
+        console.table(game.votes);
         const vote: Vote = game.currentVote();
+        if (!vote) {
+            return;
+        }
         vote.concluded = true;
+
+        console.log('>>>>', vote.votes)
 
         vote.votes.forEach((userVote: UserVote) => {
             const result = vote.results.find(result => result.vote === userVote.vote);
 
+
             if (userVote.vote !== null) {
+                console.log('>>>>>', userVote);
                 if (!result) {
-                    vote.results.push(new Result(userVote.vote, 1, [userVote.username]));
+                    vote.results.push(new Result(userVote.vote, 1, [userVote.username], 0));
                 } else {
                     result.numOfVotes = result.numOfVotes + 1;
+                    // result.previousNumOfVotes = r
                     result.voters.push(userVote.username);
                 }
             }
+            // if (userVote.previousVote) {
+            //     const previous = vote.results.find(result => {
+            //         console.log(result, userVote)
+            //         return result.vote === userVote.previousVote
+            //     });
+            //     if (!previous) {
+            //         vote.results.push(new Result(userVote.previousVote, 0, [userVote.username], 1));
+
+            //     } else {
+            //         previous.previousNumOfVotes = previous.previousNumOfVotes + 1;
+            //         // result.previousNumOfVotes = r
+            //         previous.voters.push(userVote.username);
+            //     }
+            // }
         });
 
         console.table(vote.results);
@@ -101,6 +124,33 @@ io.on('connection', (socket) => {
         }
     }
 
+    function handleRevote(response: any) {
+        console.log('Peforming revote for ', response.name)
+
+        // Get the vote with the dateCreated
+
+        const newVote = JSON.parse(JSON.stringify(game.currentVote()));
+        if (!newVote.name) {
+            newVote.name = newVote.dateCreated;
+        }
+        // newVote.revoteCount++;
+        newVote.name += ' revote';
+        newVote.results = [];
+        newVote.concluded = false;
+        for (let i = 0; i < newVote.votes.length; i++) {
+            newVote.votes[i].previousVote = newVote.votes[i].vote;
+            newVote.votes[i].vote = null;
+        }
+        // newVote.votes.forEach((vote: any) => {
+        //     vote.previousVote = vote;
+        //     vote.vote = null;
+        // });
+        game.votes.push(newVote);
+        console.log('broadcasting revote', game);
+        broadcastUpdate('voted');
+
+    }
+
     /**
      * Returns the users vote.
      * @param userId the user id
@@ -119,8 +169,7 @@ io.on('connection', (socket) => {
 
 
     console.log('A user has connected');
-    broadcastUpdate('voted');
-
+    setTimeout(() => broadcastUpdate('voted'), 300)
     socket.on('disconnect', () => {
         console.log('A user has disconnected');
     });
@@ -128,6 +177,7 @@ io.on('connection', (socket) => {
     socket.on('reveal votes', handleRevealResults)
     socket.on('start new vote', handleNewVote);
     socket.on('vote', handleVote);
+    socket.on('revote', handleRevote);
     socket.on('hi', handleHi);
     socket.on('bye', (name) => {
         console.log('bye', name)
