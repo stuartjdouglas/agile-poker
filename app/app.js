@@ -40,7 +40,7 @@ createApp({
         setName: function () {
             if (this.name) {
                 socket.emit('hi', {
-                    name: localStorage.name,
+                    username: localStorage.name,
                     isModerator: localStorage.isModerator
                 });
                 this.changeName = false;
@@ -177,14 +177,14 @@ createApp({
             // Let server know your playing
             if (localStorage.name) {
                 socket.emit('hi', {
-                    name: localStorage.name,
+                    username: localStorage.name,
                     isModerator: localStorage.isModerator === 'true'
                 });
             }
         });
         if (localStorage.name && localStorage.isModerator) {
             socket.emit('hi', {
-                name: localStorage.name,
+                username: localStorage.name,
                 isModerator: localStorage?.isModerator === 'true'
             });
         }
@@ -201,7 +201,7 @@ createApp({
             if (this.hasName) {
 
                 socket.emit('hi', {
-                    name: localStorage.name,
+                    username: localStorage.name,
                     isModerator: localStorage.isModerator === 'true'
                 });
             }
