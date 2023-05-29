@@ -19,6 +19,7 @@
     <div id="app">
         <div class="titlebar">
             <h2>Hi {{name}}, Your voting for {{vote?.name ? vote?.name : vote?.dateCreated}}</h2>
+            <h4>With card selection: {{vote?.cardSelection}}</h4>
             <div class="buttons">
                 <input type="checkbox" id="checkbox" v-model="isModerator">
                 <label for="checkbox">Moderator</label>
@@ -40,11 +41,19 @@
                 <form>
                     <label for="resultsNewVote">New Vote name</label>
                     <input v-model="voteName" id="resultsNewVote">
+                    <label for="cars">Choose a card selection:</label>
+                    <select v-model="cardSelection" name="cardSelection">
+                        <option selected value="modified-fibonacci">Modified Fibonacci (0, 1, 2, 3, 5, 8, 13,
+                            20, 40, '?')
+                        </option>
+                        <option value="simple">Simple (0,1,2,3,4,5)</option>
+                    </select>
                 </form>
-                <button v-on:click="newVote(voteName)">Start new vote</button>
+
+                <button v-on:click="startNewVote(voteName, cardSelection)">Start new vote</button>
             </div>
 
-            <div class="voters">
+            <div class="voters" v-if="vote">
                 <div class="voter animate__animated animate__fadeIn"
                     :class="{novote: !hasUserVoted(voter.username), special: voter?.username?.toLowerCase() === 'chuka'}"
                     v-for="voter in getVoters(connectedVoters, vote)">
@@ -59,7 +68,7 @@
                 </div>
             </div>
 
-            <div class="center-stuff">
+            <div class="center-stuff" v-if="vote">
                 <button class="center-button animate__animated"
                     :class="{animate__headShake:getUserVotes(connectedVoters) ==='(All Voted)'}"
                     v-on:click="revealVotes()" v-if="!vote?.concluded">{{getUserVotes(connectedVoters)}} Reveal
@@ -84,8 +93,17 @@
                 <form>
                     <label for="resultsNewVote">New Vote name</label>
                     <input v-model="voteName" id="resultsNewVote">
+
+                    <label for="cars">Choose a card selection:</label>
+                    <select v-model="cardSelection" name="cardSelection">
+                        <option selected value="modified-fibonacci">Modified Fibonacci (0, 1, 2, 3, 5, 8, 13,
+                            20, 40, '?')
+                        </option>
+                        <option value="simple">Simple (0,1,2,3,4,5)</option>
+                    </select>
                 </form>
-                <button v-on:click="newVote(voteName)" v-if="vote.concluded">Start new vote</button>
+                <button v-on:click="startNewVote(voteName, cardSelection)" v-if="vote.concluded">Start new
+                    vote</button>
             </div>
             <div class="history">
                 <h2>History</h2>

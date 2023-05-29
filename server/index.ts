@@ -52,9 +52,10 @@ io.on('connection', (socket) => {
      * Handles creating a new vote
      * @param name the vote name 
      */
-    function handleNewVote(name: string) {
-        const vote = new Vote(name);
-        console.log('New vote started', name);
+    function handleNewVote(newVote: any) {
+        const newDateCreate = new Date();
+        const vote = new Vote(newVote.name, newVote.cardSelection);
+        console.log('New vote started', newVote.name, 'with card selection', newVote.cardSelection);
         game.connectedVoters = [];
         if (!game.votes) {
             game.votes = new Array(vote);
@@ -70,7 +71,6 @@ io.on('connection', (socket) => {
      * @param response username and isModerator
      */
     function handleHi(response: User) {
-        console.log(response);
         console.log(`User ${response.username} says hi${response.isModerator ? ', I am a mod' : ', i am not a mod'}`);
         const user = game.connectedVoters.find(user => user.username === response.username);
         if (!user) {
@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('reveal votes', handleRevealResults)
-    socket.on('new vote', handleNewVote);
+    socket.on('start new vote', handleNewVote);
     socket.on('vote', handleVote);
     socket.on('hi', handleHi);
     socket.on('bye', (name) => {

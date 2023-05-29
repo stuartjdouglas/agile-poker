@@ -4,7 +4,7 @@ const socket = io();
 createApp({
     data() {
         return {
-            cards: [0, 1, 2, 3, 5, 8, 13, 20, 40, '?'],
+            cards: [],
             hasName: false,
             name: null,
             isModerator: null,
@@ -13,7 +13,8 @@ createApp({
             vote: null,
             voter: null,
             connectedVoters: null,
-            chartData: null
+            chartData: null,
+            cardSelection: 'modified-fibonacci'
         }
     },
     methods: {
@@ -26,10 +27,10 @@ createApp({
                 });
             }
         },
-        newVote: function (name) {
+        startNewVote: function (name, cardSelection) {
             if (!this.vote || this.vote.concluded) {
-                console.log('Creating new vote');
-                socket.emit('new vote', name);
+                console.log('Creating new vote', name, cardSelection);
+                socket.emit('start new vote', { name: name, cardSelection: cardSelection });
             }
         },
         revealVotes: function () {
@@ -135,7 +136,6 @@ createApp({
             this.hasName = true;
         }
         if (localStorage.isModerator) {
-
             this.isModerator = localStorage.isModerator;
         }
     },
@@ -143,9 +143,17 @@ createApp({
         window.addEventListener("beforeunload", this.leaving);
         const getCurrentVote = (votes) => votes[votes.length - 1];
 
+        // When someone has voted
         socket.on('voted', (votes) => {
-            console.log('Voted');
             this.vote = getCurrentVote(votes.votes);
+
+            const cardSelection = {
+                'modified-fibonacci': [0, 1, 2, 3, 5, 8, 13,
+                    20, 40, '?'],
+                'simple': [0, 1, 2, 3, 4, 5]
+
+            }
+            this.cards = cardSelection[this.vote.cardSelection];
             this.votes = votes.votes;
             this.connectedVoters = votes.connectedVoters;
             if (this.vote?.concluded) {
@@ -153,16 +161,18 @@ createApp({
             }
         });
 
+        // WHhen someone has requested to reveal the votes
         socket.on('reveal votes', (votes) => {
             this.vote = getCurrentVote(votes.votes);
+
             this.votes = votes.votes;
             this.connectedVoters = votes.connectedVoters;
             setTimeout(() => {
                 this.showGraph(this.vote)
-
             }, 0)
         });
 
+        // When a new vote has been created
         socket.on('new vote', (votes) => {
 
             // Set to new vote game

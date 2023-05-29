@@ -52,6 +52,9 @@ export class Vote {
     /** Name of the vote */
     name;
 
+    /** the card selection */
+    cardSelection: string;
+
     /** List of user votes */
     votes: Array<UserVote>;
 
@@ -64,8 +67,9 @@ export class Vote {
     /** The date time of creation */
     dateCreated: Date;
 
-    constructor(name: string) {
+    constructor(name: string, cardSelection: string) {
         this.name = name;
+        this.cardSelection = cardSelection;
         this.dateCreated = new Date();
         this.votes = [];
         this.concluded = false;
