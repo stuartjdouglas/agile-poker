@@ -20,6 +20,8 @@ export class UserVote {
     /** The user vote */
     vote: Vote;
 
+    previousVote: Vote;
+
     constructor(username: string, vote: Vote) {
         this.username = username;
         this.vote = vote;
@@ -36,13 +38,16 @@ export class Result {
     /** The number of votes */
     numOfVotes: number;
 
+    previousNumOfVotes: number;
+
     /** The list of voters */
     voters: Array<string>;
 
-    constructor(vote: Vote, numOfVotes: number, voters: Array<string>) {
+    constructor(vote: Vote, numOfVotes: number, voters: Array<string>, previousNumOfVotes: number) {
         this.vote = vote;
         this.numOfVotes = numOfVotes;
         this.voters = voters;
+        this.previousNumOfVotes = previousNumOfVotes;
     }
 }
 

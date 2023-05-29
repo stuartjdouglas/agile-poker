@@ -33,6 +33,12 @@ createApp({
                 socket.emit('start new vote', { name: name, cardSelection: cardSelection });
             }
         },
+        revote: function (name) {
+            if (this.vote.concluded) {
+                console.log('Revoting', this.vote.dateCreated);
+                socket.emit('revote', { name: this.vote.dateCreated });
+            }
+        },
         revealVotes: function () {
             if (!this.vote.concluded) {
                 socket.emit('reveal votes')
@@ -117,17 +123,25 @@ createApp({
             socket.emit('bye', localStorage.name);
         },
         hasUserVoted(username) {
-            if (this.vote) {
-
-                return this.vote?.votes?.find(vote => vote.username === username);
+            if (username && this.vote) {
+                return this.vote?.votes?.find(vote => vote.username === username)?.vote;
             }
             return false;
         },
         getUserVote(username) {
-            if (this.vote) {
+            if (username && this.vote) {
                 return this.vote?.votes?.find(vote => vote?.username === username)?.vote;
             }
             return null;
+        },
+        getUserPreviousVote(username) {
+            if (this.vote) {
+                return this.vote?.votes?.find(vote => vote?.username === username)?.previousVote;
+            }
+            return null;
+        },
+        isVoteHigher(username) {
+            return this.getUserVote(username) > this.getUserPreviousVote(username);
         }
     },
     mounted() {

@@ -63,7 +63,17 @@
                         <span class="username">{{voter.username}}</span>
                         <span v-if="voter.isModerator">Mod</span>
                         <span class="vote">{{hasUserVoted(voter.username) != null ? 'voted' : 'not voted'}}</span>
-                        <span v-if="vote?.concluded" class="vote">{{getUserVote(voter.username)}}</span>
+                        <span v-if="vote?.concluded" class="vote"
+                            :class="{voted: hasUserVoted(voter.username), higherVote: isVoteHigher(voter?.username)}">{{getUserVote(voter.username)}}
+                            <span v-if="getUserPreviousVote(voter.username)">
+                                <i class="icon-chevron-sign-up"
+                                    v-if="vote?.concluded && isVoteHigher(voter?.username)"></i>
+                                <i class="icon-chevron-sign-down"
+                                    v-if="vote?.concluded && !isVoteHigher(voter?.username)"></i></span></span>
+                        <span v-if="vote?.concluded && getUserPreviousVote(voter.username)"
+                            class="vote previous-vote">Previously
+                            {{getUserPreviousVote(voter.username)}}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -83,10 +93,20 @@
                     <div style="height: 200px;"><canvas id="myChart"></canvas></div>
 
                     <div class="result-container">
-                        <div class="result" v-for="vote in vote?.results">
-                            <span class="amount">{{vote.numOfVotes}} vote(s) for </span>
-                            <span class="vote">{{vote.vote !== undefined ? vote.vote : 'not voted'}}</span>
-                        </div>
+
+                        <table class="results-table">
+                            <tr>
+                                <th>Vote</th>
+                                <th>Number of votes</th>
+                                <!-- <th>Previously</th> -->
+                            </tr>
+                            <tr v-for="vote in vote?.results">
+                                <td>{{vote.vote !== undefined ? vote.vote : 'not voted'}}</td>
+                                <td>{{vote.numOfVotes}} vote(s)</td>
+                                <!-- <td>{{vote.previousNumOfVotes > vote.vote ? '+ ':
+                                    '- '}}{{vote.previousNumOfVotes}}</td> -->
+                            </tr>
+                        </table>
                     </div>
                 </div>
 
@@ -104,6 +124,7 @@
                 </form>
                 <button v-on:click="startNewVote(voteName, cardSelection)" v-if="vote.concluded">Start new
                     vote</button>
+                <button class="revote-button" v-on:click="revote(this.vote.name)" v-if="vote.concluded">Re-vote</button>
             </div>
             <div class="history">
                 <h2>History</h2>
