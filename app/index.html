@@ -55,7 +55,7 @@
 
             <div class="voters" v-if="vote">
                 <div class="voter animate__animated animate__fadeIn"
-                    :class="{novote: !hasUserVoted(voter.username), special: voter?.username?.toLowerCase() === 'chuka'}"
+                    :class="{novote: hasUserVoted(voter.username) == null, special: voter?.username?.toLowerCase() === 'chuka'}"
                     v-for="voter in getVoters(connectedVoters, vote)">
                     <i
                         :class="{'icon-star': voter?.username?.toLowerCase() === 'chuka', 'icon-user': voter?.username?.toLowerCase() !== 'chuka'}"></i>
@@ -64,7 +64,7 @@
                         <span v-if="voter.isModerator">Mod</span>
                         <span class="vote">{{hasUserVoted(voter.username) != null ? 'voted' : 'not voted'}}</span>
                         <span v-if="vote?.concluded" class="vote"
-                            :class="{voted: hasUserVoted(voter.username), higherVote: isVoteHigher(voter?.username)}">{{getUserVote(voter.username)}}
+                            :class="{voted: hasUserVoted(voter.username) != null, higherVote: isVoteHigher(voter?.username)}">{{getUserVote(voter.username)}}
                             <span v-if="getUserPreviousVote(voter.username)">
                                 <i class="icon-chevron-sign-up"
                                     v-if="vote?.concluded && isVoteHigher(voter?.username)"></i>
@@ -152,8 +152,7 @@
 
         <div class="bottom-pane" v-if="!vote?.concluded">
             <div class="cards">
-                <div class="card" v-for="(card) in cards" :class="getCardClass(card)" v-if="name"
-                    v-on:click="issueVote(card)">
+                <div class="card" v-for="(card) in cards" :class="getCardClass(card)" v-on:click="issueVote(card)">
                     {{card}}</div>
             </div>
         </div>

@@ -58,7 +58,7 @@ createApp({
         },
         getCardClass: function (vote) {
             const user = this.vote?.votes?.find(vote => vote?.username === this.name);
-            return { voted: user?.vote === vote };
+            return { voted: user?.vote === vote, notVoted: user?.vote !== vote };
         },
         clearName: function () {
             localStorage.removeItem('name');
@@ -100,7 +100,7 @@ createApp({
         },
         getUserVotes(voters) {
             voters = voters?.filter(v => v && !v.isModerator);
-            const hasVoted = voters?.filter(voter => this.vote?.votes?.find(v => v?.username === voter?.username)?.vote)
+            const hasVoted = voters?.filter(voter => this.vote?.votes?.find(v => v?.username === voter?.username))
             if (hasVoted?.length === voters?.length) {
                 return '(All Voted)';
             }
