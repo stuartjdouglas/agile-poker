@@ -65,12 +65,12 @@
                         <span class="vote">{{hasUserVoted(voter.username) != null ? 'voted' : 'not voted'}}</span>
                         <span v-if="vote?.concluded" class="vote"
                             :class="{voted: hasUserVoted(voter.username) != null, higherVote: isVoteHigher(voter?.username)}">{{getUserVote(voter.username)}}
-                            <span v-if="getUserPreviousVote(voter.username)">
-                                <i class="icon-chevron-sign-up"
-                                    v-if="vote?.concluded && isVoteHigher(voter?.username)"></i>
-                                <i class="icon-chevron-sign-down"
-                                    v-if="vote?.concluded && !isVoteHigher(voter?.username)"></i></span></span>
-                        <span v-if="vote?.concluded && getUserPreviousVote(voter.username)"
+                            <span v-if="getUserPreviousVote(voter.username) != null">
+                                <i class="icon-chevron-up"
+                                    v-if="vote?.concluded && isVoteHigher(voter?.username) && !isVoteSame(voter?.username)"></i>
+                                <i class="icon-chevron-down"
+                                    v-if="vote?.concluded && isVoteLower(voter?.username) && !isVoteSame(voter?.username)"></i></span></span>
+                        <span v-if="vote?.concluded && getUserPreviousVote(voter.username) != null"
                             class="vote previous-vote">Previously
                             {{getUserPreviousVote(voter.username)}}
                         </span>
@@ -126,7 +126,7 @@
                     vote</button>
                 <button class="revote-button" v-on:click="revote(this.vote.name)" v-if="vote.concluded">Re-vote</button>
             </div>
-            <div class="history">
+            <!-- <div class="history">
                 <h2>History</h2>
                 <div class="history-vote" v-for="historyVote in getHistory()">
                     <div v-if="historyVote.concluded">
@@ -147,7 +147,7 @@
 
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <div class="bottom-pane" v-if="!vote?.concluded">

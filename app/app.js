@@ -142,6 +142,12 @@ createApp({
         },
         isVoteHigher(username) {
             return this.getUserVote(username) > this.getUserPreviousVote(username);
+        },
+        isVoteLower(username) {
+            return this.getUserVote(username) < this.getUserPreviousVote(username);
+        },
+        isVoteSame(username) {
+            return this.getUserVote(username) === this.getUserPreviousVote(username);
         }
     },
     mounted() {

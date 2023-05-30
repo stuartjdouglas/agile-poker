@@ -216,6 +216,7 @@ table {
 .history {
     position: absolute;
     top: 95vh;
+    z-index: 10;
 }
 
 .novote {
@@ -226,6 +227,7 @@ table {
 
 .result-container {
     padding-bottom: 20px;
+    z-index: 90;
 }
 
 .results-container {
