@@ -1,4 +1,4 @@
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 import express from 'express';
 import { Server } from 'socket.io';
@@ -12,13 +12,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+const users = new Array<User>();
+
 // Host content
 app.use(express.static('app'));
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/app/index.html');
 });
-
 
 // Socket IO communication
 io.on('connection', (socket) => {
@@ -34,15 +35,11 @@ io.on('connection', (socket) => {
             return;
         }
         vote.concluded = true;
-
-        console.log('>>>>', vote.votes)
-
         vote.votes.forEach((userVote: UserVote) => {
             const result = vote.results.find(result => result.vote === userVote.vote);
 
 
             if (userVote.vote !== null) {
-                console.log('>>>>>', userVote);
                 if (!result) {
                     vote.results.push(new Result(userVote.vote, 1, [userVote.username], 0));
                 } else {
@@ -51,20 +48,6 @@ io.on('connection', (socket) => {
                     result.voters.push(userVote.username);
                 }
             }
-            // if (userVote.previousVote) {
-            //     const previous = vote.results.find(result => {
-            //         console.log(result, userVote)
-            //         return result.vote === userVote.previousVote
-            //     });
-            //     if (!previous) {
-            //         vote.results.push(new Result(userVote.previousVote, 0, [userVote.username], 1));
-
-            //     } else {
-            //         previous.previousNumOfVotes = previous.previousNumOfVotes + 1;
-            //         // result.previousNumOfVotes = r
-            //         previous.voters.push(userVote.username);
-            //     }
-            // }
         });
 
         console.table(vote.results);
@@ -77,7 +60,7 @@ io.on('connection', (socket) => {
      */
     function handleNewVote(newVote: any) {
         const newDateCreate = new Date();
-        const vote = new Vote(newVote.name, newVote.cardSelection);
+        const vote = new Vote(newVote.name ? newVote.name : newDateCreate, newVote.cardSelection);
         console.log('New vote started', newVote.name, 'with card selection', newVote.cardSelection);
         game.connectedVoters = [];
         if (!game.votes) {
@@ -86,42 +69,8 @@ io.on('connection', (socket) => {
             game.votes.push(vote);
         }
         broadcastUpdate('new vote');
-    }
-
-    /**
-     * Handles clients communicating.
-     *
-     * @param response username and isModerator
-     */
-    function handleHi(response: User) {
-        console.log(`User ${response.username} says hi${response.isModerator ? ', I am a mod' : ', i am not a mod'}`);
-        const user = game.connectedVoters.find(user => user.username === response.username);
-        if (!user) {
-            game.connectedVoters.push(new User(response.username ? response.username : 'Unknown User', response.isModerator));
-        } else {
-            user.isModerator = response.isModerator;
-        }
-
         broadcastUpdate('voted');
-    }
 
-    /**
-     * Handles getting a vote from the client.
-     *
-     * @param action data from client
-     */
-    function handleVote(action: UserVote) {
-        const vote = game.currentVote();
-        console.log(`User ${action.username} has voted ${action.vote}`);
-        if (vote && !vote.concluded) {
-            const user = getUsersVote(action.username);
-            if (user) {
-                user.vote = action.vote;
-            } else {
-                vote.votes.push(new UserVote(action.username, action.vote));
-            }
-            broadcastUpdate('voted');
-        }
     }
 
     function handleRevote(response: any) {
@@ -141,14 +90,9 @@ io.on('connection', (socket) => {
             newVote.votes[i].previousVote = newVote.votes[i].vote;
             newVote.votes[i].vote = null;
         }
-        // newVote.votes.forEach((vote: any) => {
-        //     vote.previousVote = vote;
-        //     vote.vote = null;
-        // });
         game.votes.push(newVote);
         console.log('broadcasting revote', game);
         broadcastUpdate('voted');
-
     }
 
     /**
@@ -158,30 +102,91 @@ io.on('connection', (socket) => {
      */
     function getUsersVote(userId: string): UserVote | undefined {
         const vote: Vote = game.currentVote();
-        return vote?.votes?.find(vote => vote.username === userId);
+        return vote?.votes?.find(vote => vote.id === userId);
     }
 
     /** Broadcasts updates to all users */
     function broadcastUpdate(subject: string) {
+        const currentDate = new Date();
+        game.connectedVoters = users.filter(user => (currentDate.getTime() - user.lastKnown.getTime()) < 10 * 60 * 1000);
         socket.broadcast.emit(subject, game);
         socket.emit(subject, game);
     }
 
-
-    console.log('A user has connected');
-    setTimeout(() => broadcastUpdate('voted'), 300)
-    socket.on('disconnect', () => {
-        console.log('A user has disconnected');
-    });
-
     socket.on('reveal votes', handleRevealResults)
     socket.on('start new vote', handleNewVote);
-    socket.on('vote', handleVote);
     socket.on('revote', handleRevote);
-    socket.on('hi', handleHi);
-    socket.on('bye', (name) => {
-        console.log('bye', name)
+
+    socket.on('userConnect', (user: User) => {
+        console.log('User has connected', user.id)
+        if (!users.find(knownuser => knownuser.id === user.id)) {
+            console.log(`New user ${user.id} has connected`);
+            const newUser = new User(user.id, user.username ? user.username : user.id, user.isModerator, user.connected, new Date(), null);
+            newUser.connected = true;
+            newUser.lastKnown = new Date();
+            users.push(newUser);
+        } else {
+            const currentUser = users.find(knownuser => knownuser.id === user.id);
+            console.log(`User ${currentUser?.username} has reconnected`);
+
+            if (currentUser) {
+                currentUser.connected = true;
+                currentUser.isModerator = user.isModerator;
+                currentUser.lastKnown = new Date();
+            }
+        }
+        broadcastUpdate('voted');
     });
+
+    socket.on('userDisconnection', (userId: string) => {
+        const currentUser = users.find(knownuser => knownuser.id === userId);
+        console.log(`User ${currentUser?.username} has disconnected`);
+        if (currentUser) {
+            currentUser.lastKnown = new Date();
+            currentUser.connected = false;
+        }
+        broadcastUpdate('voted');
+
+    });
+
+    socket.on('userChangeName', (user: User) => {
+        const currentUser = users.find(knownuser => knownuser.id === user.id);
+        console.log(`User ${currentUser?.username} has changed name to ${user.username}`);
+        if (currentUser) {
+            currentUser.lastKnown = new Date();
+            currentUser.username = user.username;
+        }
+        broadcastUpdate('voted');
+    });
+
+    socket.on('nudgeuser', (userid: string) => {
+        socket.broadcast.emit('nudge', userid);
+        socket.emit('nudge', userid);
+    });
+
+    socket.on('userVoted', (userVote: UserVote) => {
+
+        // check if user exists
+        const user = users.find(user => user.id == userVote.id);
+        if (!user) {
+            users.push(new User(userVote.id, userVote.username, false, true, new Date(), new Date()));
+        } else {
+            user.lastVoted = new Date();
+        }
+
+
+        console.log(`User ${userVote.username} has voted ${userVote.vote}`);
+        const vote = game.currentVote();
+        if (vote && !vote.concluded) {
+            const user = getUsersVote(userVote.id);
+            if (user) {
+                user.vote = userVote.vote;
+            } else {
+                vote.votes.push(userVote);
+            }
+            broadcastUpdate('voted');
+        }
+    })
 });
 
 server.listen(port, () => {

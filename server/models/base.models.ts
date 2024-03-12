@@ -1,11 +1,21 @@
 export class User {
+
+    id: string;
     username: string;
 
     isModerator: boolean;
 
-    constructor(username: string, isModerator: boolean) {
+    public connected: boolean;
+    public lastKnown: Date;
+    public lastVoted: Date | null;
+
+    constructor(id: string, username: string, isModerator: boolean, connected: boolean, lastKnown: Date, lastVoted: Date | null) {
+        this.id = id;
         this.username = username;
         this.isModerator = isModerator;
+        this.connected = connected;
+        this.lastKnown = lastKnown;
+        this.lastVoted = lastVoted;
     }
 }
 
@@ -17,12 +27,15 @@ export class UserVote {
     /** Username */
     username: string;
 
+    id: string;
+
     /** The user vote */
     vote: Vote;
 
     previousVote: any;
 
-    constructor(username: string, vote: Vote) {
+    constructor(id: string, username: string, vote: Vote) {
+        this.id = id;
         this.username = username;
         this.vote = vote;
     }
